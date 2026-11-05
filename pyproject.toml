@@ -15,7 +15,7 @@ dependencies = [
 reclickup-mcp = "reclickup_mcp.server:main"
 
 [project.urls]
-Homepage = "https://github.com/haonguyenstech/reclickup-mcp"
+Homepage = "https://github.com/saigontechnology/reclickup-mcp"
 
 [build-system]
 requires = ["hatchling>=1.25"]

@@ -7,7 +7,7 @@
 **Every tool of the official ClickUp MCP, plus formatted tables written straight into a ClickUp Doc.**
 
 <p>
-  <a href="https://github.com/haonguyenstech/reclickup-mcp/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/haonguyenstech/reclickup-mcp?color=1E9E75&logo=github" /></a>
+  <a href="https://github.com/saigontechnology/reclickup-mcp/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/saigontechnology/reclickup-mcp?color=1E9E75&logo=github" /></a>
   <img alt="Python ≥3.9" src="https://img.shields.io/badge/python-%E2%89%A53.9-3776AB?logo=python&logoColor=white" />
   <img alt="uv" src="https://img.shields.io/badge/install-uvx-DE5FE9?logo=uv&logoColor=white" />
   <img alt="Node.js" src="https://img.shields.io/badge/node-npx-339933?logo=node.js&logoColor=white" />
@@ -17,7 +17,7 @@
 
 <a href="https://pub-ad81218f6d26484ab3b7b9f714c38911.r2.dev/videos/reclickup-mcp-windows-setup.mp4"><img src=".github/assets/reclickup-mcp-windows-setup.jpg" width="760" alt="Play the Windows setup video" /></a>
 
-<sub>Setup on Windows in Claude Desktop: install, sign in, add the clickup-user-story skill, write a ticket into a Doc (1:55).</sub>
+<sub>Setup on Windows with the new Claude Desktop settings: install from the GitHub link or a downloaded reclickup-mcp.tgz, sign in, add the clickup-user-story skill, write a ticket into a Doc.</sub>
 
 </div>
 
@@ -109,7 +109,7 @@ Paste one of these into **Claude Code** (or a Claude Desktop task with shell acc
 
 ```text
 Install the reclickup-mcp MCP server for Claude Desktop on this computer, following
-https://github.com/haonguyenstech/reclickup-mcp (read its README first). Talk to me in my language.
+https://github.com/saigontechnology/reclickup-mcp (read its README first). Talk to me in my language.
 
 1. Check the requirements: uv (uvx), Node.js (npx) and Microsoft Edge. Install what is missing
    (uv: the official one-line installer; Node: winget on Windows, brew on macOS) and tell me what you installed.
@@ -119,14 +119,17 @@ https://github.com/haonguyenstech/reclickup-mcp (read its README first). Talk to
    If the file has "deploymentMode": "3p", the Claude-3p one is in use. Back the file up, then add ONLY this entry
    under "mcpServers", keeping every other key; write UTF-8 without a BOM:
      "reclickup-mcp": { "command": "uvx",
-       "args": ["--from", "git+https://github.com/haonguyenstech/reclickup-mcp", "reclickup-mcp"] }
+       "args": ["--from",
+         "https://github.com/saigontechnology/reclickup-mcp/archive/refs/heads/master.tar.gz",
+         "reclickup-mcp"] }
    (macOS: if Desktop cannot find uvx, use the full path from `which uvx`.)
-3. Pre-fetch it: uvx --from git+https://github.com/haonguyenstech/reclickup-mcp python -c "import reclickup_mcp"
+3. Pre-fetch it: uvx --from https://github.com/saigontechnology/reclickup-mcp/archive/refs/heads/master.tar.gz python -c "import reclickup_mcp"
 4. Ask me to quit Claude Desktop completely (tray / menu bar icon -> Quit) and reopen it. Do not kill it yourself.
-   Then Settings -> Developer must show reclickup-mcp "Running".
+   Then Settings -> Desktop app -> Extensions: Manage -> Local MCP servers must show reclickup-mcp "Running"
+   (typing "developer" in the Settings search also opens that page).
 5. Tell me to start a Claude Desktop task, type "log in to ClickUp", and in the browser page that opens pick the
    workspace and click "Connect Workspace".
-6. Download https://github.com/haonguyenstech/reclickup-mcp/releases/latest/download/clickup-user-story.zip and
+6. Download https://github.com/saigontechnology/reclickup-mcp/releases/latest/download/clickup-user-story.zip and
    tell me where it is: Claude Desktop -> Customize -> Skills -> + -> Upload skill.
 7. Report what you changed (config file path, backup path) and what I still have to do.
 ```
@@ -137,23 +140,25 @@ https://github.com/haonguyenstech/reclickup-mcp (read its README first). Talk to
 <summary><b>Prompt 2: check for an update and update it</b></summary>
 
 ```text
-Check whether reclickup-mcp (https://github.com/haonguyenstech/reclickup-mcp) on this computer is up to date,
+Check whether reclickup-mcp (https://github.com/saigontechnology/reclickup-mcp) on this computer is up to date,
 and update it if not. Talk to me in my language.
 
 1. Latest version: the newest commit on master
-   (https://api.github.com/repos/haonguyenstech/reclickup-mcp/commits/master) and the latest release.
+   (https://api.github.com/repos/saigontechnology/reclickup-mcp/commits/master) and the latest release.
 2. Installed version: the "reclickup-mcp" entry in Claude Desktop's claude_desktop_config.json (see the README for
-   where it lives; check Claude-3p too). If it is missing, stop and offer to install it instead. If its git URL is
-   pinned to an old tag or commit, tell me before changing it.
+   where it lives; check Claude-3p too). If it is missing, stop and offer to install it instead. If it points at a
+   downloaded reclickup-mcp.tgz, download the latest one over it. If it is pinned to an old tag or commit, tell me
+   before changing it.
 3. Update the cached build:
-   uvx --refresh --from git+https://github.com/haonguyenstech/reclickup-mcp python -c "import reclickup_mcp"
+   uvx --refresh --from <the --from value in the config> python -c "import reclickup_mcp"
 4. Ask me to quit Claude Desktop completely (do not kill it yourself), then run
    tools/enable_desktop_tools.py from the repo
-   (https://raw.githubusercontent.com/haonguyenstech/reclickup-mcp/master/tools/enable_desktop_tools.py):
+   (https://raw.githubusercontent.com/saigontechnology/reclickup-mcp/master/tools/enable_desktop_tools.py):
    first without arguments; if it lists disabled reclickup tools, run it again with --apply. Delete the script after.
-5. Ask me to reopen Claude Desktop and check Settings -> Developer: reclickup-mcp "Running".
+5. Ask me to reopen Claude Desktop and check Settings -> Desktop app -> Extensions (Local MCP servers):
+   reclickup-mcp "Running".
 6. Skill: download the latest
-   https://github.com/haonguyenstech/reclickup-mcp/releases/latest/download/clickup-user-story.zip and tell me to
+   https://github.com/saigontechnology/reclickup-mcp/releases/latest/download/clickup-user-story.zip and tell me to
    replace the clickup-user-story skill (Customize -> Skills: delete the old one, Upload skill). For Claude Code,
    unzip it over ~/.claude/skills/clickup-user-story yourself.
 7. Report: old -> new version, what changed (the commit messages since the old version), what I still have to do.
@@ -164,7 +169,7 @@ and update it if not. Talk to me in my language.
 ### By hand
 
 
-Nothing to clone. [`uv`](https://docs.astral.sh/uv/) fetches the server straight from this repo,
+Nothing to clone, no Git needed. [`uv`](https://docs.astral.sh/uv/) fetches the server straight from this repo,
 installs its dependencies in a cached environment, and downloads Python itself if needed.
 
 Requirements: **uv**, **Node.js** (for `npx`), **Microsoft Edge**.
@@ -178,18 +183,44 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 
 ### Claude Desktop
 
-Add this to `claude_desktop_config.json` (Settings → Developer → Edit Config), then restart Claude Desktop:
+Open **Settings → Desktop app → Extensions: Manage → Local MCP servers → Edit config** (or type `developer` in the
+Settings search), add this to `claude_desktop_config.json`, save, then quit Claude Desktop completely and reopen it:
 
 ```json
 {
   "mcpServers": {
     "reclickup-mcp": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/haonguyenstech/reclickup-mcp", "reclickup-mcp"]
+      "args": ["--from",
+        "https://github.com/saigontechnology/reclickup-mcp/archive/refs/heads/master.tar.gz",
+        "reclickup-mcp"]
     }
   }
 }
 ```
+
+The same entry works on macOS and Windows (`uvx` is a real executable, no `cmd /c` needed).
+
+<details>
+<summary><b>Can't reach GitHub from Claude Desktop? Install from a downloaded file</b></summary>
+
+1. Download [`reclickup-mcp.tgz`](https://github.com/saigontechnology/reclickup-mcp/releases/latest/download/reclickup-mcp.tgz)
+   from the latest release and keep it somewhere it will stay, for example `Downloads`.
+2. Put the file's full path in `--from` (`~` and `%USERPROFILE%` are not expanded):
+
+   ```json
+   "reclickup-mcp": {
+     "command": "uvx",
+     "args": ["--from", "C:\\Users\\<you>\\Downloads\\reclickup-mcp.tgz", "reclickup-mcp"]
+   }
+   ```
+
+   Write every `\` as `\\` in JSON. On macOS: `"/Users/<you>/Downloads/reclickup-mcp.tgz"`. A path with spaces is fine.
+3. Quit Claude Desktop completely and reopen it. uv still downloads the dependencies (and Python if needed) on the first start.
+
+To update later, download the new file over the old one and run `uvx --refresh --from <that path> python -c "import reclickup_mcp"` once.
+
+</details>
 
 If Claude Desktop cannot find `uvx` or `npx`, use the full path to `uvx` (`which uvx`, e.g.
 `/Users/you/.local/bin/uvx`) and add `"env": { "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin" }`
@@ -198,7 +229,7 @@ so the path reaches `node`/`npx`.
 ### Claude Code
 
 ```bash
-claude mcp add reclickup-mcp -- uvx --from git+https://github.com/haonguyenstech/reclickup-mcp reclickup-mcp
+claude mcp add reclickup-mcp -- uvx --from https://github.com/saigontechnology/reclickup-mcp/archive/refs/heads/master.tar.gz reclickup-mcp
 ```
 
 ### First run
@@ -212,8 +243,8 @@ claude mcp add reclickup-mcp -- uvx --from git+https://github.com/haonguyenstech
 
 ### Updating
 
-`uvx` caches the build. To pick up a newer commit, run `uvx --refresh --from git+https://github.com/haonguyenstech/reclickup-mcp reclickup-mcp`
-once, or pin a version in the config: `git+https://github.com/haonguyenstech/reclickup-mcp@v0.1.0`.
+`uvx` caches the build. To pick up a newer commit, run `uvx --refresh --from https://github.com/saigontechnology/reclickup-mcp/archive/refs/heads/master.tar.gz python -c "import reclickup_mcp"`
+once (with the same `--from` value as in your config), then restart Claude Desktop.
 
 ## Skill: clickup-user-story
 
@@ -228,14 +259,14 @@ style: 840 px tables with set column widths, green header cells and bold scenari
   Criteria) and writes it back with the same formatting.
 - **Fix:** it also repairs existing tickets whose tables came out half width.
 
-**Download:** [clickup-user-story.zip](https://github.com/haonguyenstech/reclickup-mcp/releases/latest/download/clickup-user-story.zip)
+**Download:** [clickup-user-story.zip](https://github.com/saigontechnology/reclickup-mcp/releases/latest/download/clickup-user-story.zip)
 
 - **Claude Desktop / claude.ai:** Settings → Capabilities → Skills → **Upload skill**, then pick the zip.
 - **Claude Code:**
 
   ```bash
   curl -fsSL -o /tmp/clickup-user-story.zip \
-    https://github.com/haonguyenstech/reclickup-mcp/releases/latest/download/clickup-user-story.zip
+    https://github.com/saigontechnology/reclickup-mcp/releases/latest/download/clickup-user-story.zip
   rm -rf ~/.claude/skills/clickup-user-story && unzip -q /tmp/clickup-user-story.zip -d ~/.claude/skills
   ```
 
@@ -280,7 +311,7 @@ tools that come with an MCP Apps view (`clickup_create_task`, `clickup_get_task`
 reclickup lists those tools without the view since 0a1f140, but a switch already stored stays off. Quit Claude Desktop, then:
 
 ```bash
-curl -fsSL -o enable_desktop_tools.py https://raw.githubusercontent.com/haonguyenstech/reclickup-mcp/master/tools/enable_desktop_tools.py
+curl -fsSL -o enable_desktop_tools.py https://raw.githubusercontent.com/saigontechnology/reclickup-mcp/master/tools/enable_desktop_tools.py
 python enable_desktop_tools.py            # shows what is switched off
 python enable_desktop_tools.py --apply    # switches it back on
 ```
