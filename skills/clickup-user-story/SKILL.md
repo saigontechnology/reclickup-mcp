@@ -15,7 +15,7 @@ Reply in the user's language. Ticket content itself stays in English.
 
 ## Tools: reclickup-mcp
 
-ClickUp tools come from the **`reclickup-mcp`** MCP server (local, on the user's machine; https://github.com/haonguyenstech/reclickup-mcp). It proxies the official ClickUp MCP (`mcp.clickup.com`), so every official tool keeps its name (`clickup_get_task`, `clickup_execute_operator`, `clickup_get_document_pages`, …; listed as `mcp__reclickup-mcp__<name>`), plus two of its own:
+ClickUp tools come from the **`reclickup-mcp`** MCP server (local, on the user's machine; https://github.com/saigontechnology/reclickup-mcp). It proxies the official ClickUp MCP (`mcp.clickup.com`), so every official tool keeps its name (`clickup_get_task`, `clickup_execute_operator`, `clickup_get_document_pages`, …; listed as `mcp__reclickup-mcp__<name>`), plus two of its own:
 - `clickup_doc_write`: writes formatted markdown into a Doc page through reclickup's own headless Edge (nothing on screen).
 - `clickup_relogin`: refreshes that browser's ClickUp session.
 

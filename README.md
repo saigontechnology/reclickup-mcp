@@ -17,7 +17,7 @@
 
 <a href="https://pub-ad81218f6d26484ab3b7b9f714c38911.r2.dev/videos/reclickup-mcp-windows-setup.mp4"><img src=".github/assets/reclickup-mcp-windows-setup.jpg" width="760" alt="Play the Windows setup video" /></a>
 
-<sub>Setup on Windows with the new Claude Desktop settings: install from the GitHub link or a downloaded reclickup-mcp.tgz, sign in, add the clickup-user-story skill, write a ticket into a Doc.</sub>
+<sub>Setup on Windows with the new Claude Desktop settings: install from a downloaded reclickup-mcp.tar.gz, sign in, add the clickup-user-story skill, write a ticket into a Doc.</sub>
 
 </div>
 
@@ -147,8 +147,9 @@ and update it if not. Talk to me in my language.
    (https://api.github.com/repos/saigontechnology/reclickup-mcp/commits/master) and the latest release.
 2. Installed version: the "reclickup-mcp" entry in Claude Desktop's claude_desktop_config.json (see the README for
    where it lives; check Claude-3p too). If it is missing, stop and offer to install it instead. If it points at a
-   downloaded reclickup-mcp.tgz, download the latest one over it. If it is pinned to an old tag or commit, tell me
-   before changing it.
+   downloaded reclickup-mcp.tar.gz, download the latest one over it. If it points at an old reclickup-mcp.tgz
+   (newer uv refuses the .tgz name), download reclickup-mcp.tar.gz to the same folder, change the path in the
+   config to it and delete the .tgz. If it is pinned to an old tag or commit, tell me before changing it.
 3. Update the cached build:
    uvx --refresh --from <the --from value in the config> python -c "import reclickup_mcp"
 4. Ask me to quit Claude Desktop completely (do not kill it yourself), then run
@@ -204,18 +205,19 @@ The same entry works on macOS and Windows (`uvx` is a real executable, no `cmd /
 <details>
 <summary><b>Can't reach GitHub from Claude Desktop? Install from a downloaded file</b></summary>
 
-1. Download [`reclickup-mcp.tgz`](https://github.com/saigontechnology/reclickup-mcp/releases/latest/download/reclickup-mcp.tgz)
+1. Download [`reclickup-mcp.tar.gz`](https://github.com/saigontechnology/reclickup-mcp/releases/latest/download/reclickup-mcp.tar.gz)
    from the latest release and keep it somewhere it will stay, for example `Downloads`.
 2. Put the file's full path in `--from` (`~` and `%USERPROFILE%` are not expanded):
 
    ```json
    "reclickup-mcp": {
      "command": "uvx",
-     "args": ["--from", "C:\\Users\\<you>\\Downloads\\reclickup-mcp.tgz", "reclickup-mcp"]
+     "args": ["--from", "C:\\Users\\<you>\\Downloads\\reclickup-mcp.tar.gz", "reclickup-mcp"]
    }
    ```
 
-   Write every `\` as `\\` in JSON. On macOS: `"/Users/<you>/Downloads/reclickup-mcp.tgz"`. A path with spaces is fine.
+   Write every `\` as `\\` in JSON. On macOS: `"/Users/<you>/Downloads/reclickup-mcp.tar.gz"`. A path with spaces is fine.
+   Keep the `.tar.gz` name: newer uv versions refuse a `.tgz` file ("non-PEP 625-compliant filename").
 3. Quit Claude Desktop completely and reopen it. uv still downloads the dependencies (and Python if needed) on the first start.
 
 To update later, download the new file over the old one and run `uvx --refresh --from <that path> python -c "import reclickup_mcp"` once.
@@ -225,6 +227,18 @@ To update later, download the new file over the old one and run `uvx --refresh -
 If Claude Desktop cannot find `uvx` or `npx`, use the full path to `uvx` (`which uvx`, e.g.
 `/Users/you/.local/bin/uvx`) and add `"env": { "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin" }`
 so the path reaches `node`/`npx`.
+
+#### Troubleshooting
+
+Claude Desktop's log (`mcp-server-reclickup-mcp.log` in Desktop's `logs` folder) says *Server started and
+connected successfully*, then *Server transport closed unexpectedly* a second later? `uvx` could not get the
+package. The real error is in the `uvx` lines just above:
+
+| `uvx` error | Fix |
+| --- | --- |
+| `non-PEP 625-compliant filename; only .tar.gz and .zip archives are accepted` | The downloaded file is named `.tgz`. Use `reclickup-mcp.tar.gz` (or rename it) and update the path. |
+| `Git executable not found` | The `--from` value starts with `git+`. Remove `git+`: the `.tar.gz` link above needs no Git. |
+| `Failed to resolve --with requirement` | Delete any `--with …` arguments; the entry needs only `--from <source> reclickup-mcp`. |
 
 ### Claude Code
 
