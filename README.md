@@ -50,7 +50,7 @@ no clipboard.
 | Tool | What it does |
 | --- | --- |
 | all `clickup_*` tools of the official server | Proxied unchanged from `https://mcp.clickup.com/mcp` through [`mcp-remote`](https://www.npmjs.com/package/mcp-remote), so they stay current. |
-| `clickup_doc_write` | Writes into a Doc page (`page_url`) from `markdown` (or a Quill `delta`). `mode` is `replace` (default) or `append`. If the page is untitled, it is named after the first `# ` line. Reloads the page and returns the widths, green cells and alignment of every table. Takes about 25 s. |
+| `clickup_doc_write` | Writes into a Doc page (`page_url`). Content from files on your computer: `markdown_path` (.md), `delta_path` (Quill delta, or a JSON list of row objects → one table) and `files` (more .md/.json, appended in order), so the agent does not re-type a long draft; or inline `markdown` / `delta`. All parts go into ONE write. Cowork sandbox paths (`/sessions/<name>/mnt/<folder>/…`) are mapped to the real folder. `mode` is `replace` (default) or `append`. If the page is untitled, it is named after the first `# ` line. Reloads the page and returns the widths, green cells and alignment of every table. About 20 s; run writes one at a time. |
 | `clickup_relogin` | Refreshes the ClickUp session of reclickup's headless browser. |
 
 ### Markdown it understands
@@ -65,7 +65,8 @@ no clipboard.
 Every table gets a bold header row with green background cells. A table whose first header cell is
 `User Story Name` is a key/value table: its first column is styled instead. Lines starting with
 `Scenario <n>` in a cell are bold. Columns are sized to the Doc's 720 px text column. Presets cover the
-common user-story tables (`md2delta.py` / `delta2doc.py`); any other table is scaled proportionally.
+common user-story tables, including Business Rules (`Rule ID | Rule Name | Specification` → 120/146/454 px)
+(`md2delta.py` / `delta2doc.py`; header match ignores case and `**`); any other table is scaled proportionally.
 
 ### Errors that mean "retry"
 

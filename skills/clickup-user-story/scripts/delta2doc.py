@@ -3,7 +3,7 @@
 # ClickUp itself puts on the clipboard when you copy a task description.
 #   python3 -I delta2doc.py delta.json --page "Title" > copy_to_doc.html   (page with a Copy button)
 #   python3 -I delta2doc.py delta.json --fragment > doc.html              (raw clipboard HTML)
-import base64, html, json, sys
+import base64, html, json, re, sys
 
 def inline(text, a):
     t = html.escape(text, quote=False)
@@ -25,7 +25,14 @@ DOC_PRESETS = {
  ("Code","Type","Message","Shown when"): [70, 100, 310, 240],
  ("Depends On","Reason"): [240, 480],
  ("No.","Question","Related"): [60, 510, 150],
+ ("Rule ID","Rule Name","Specification"): [120, 146, 454],
+ ("Rule ID","Rule Name","Description"): [120, 146, 454],
+ ("BR ID","Rule Name","Specification"): [120, 146, 454],
+ ("No.","Rule ID","Rule Name","Specification"): [60, 100, 130, 430],
 }
+def preset_key(head):
+    return tuple(re.sub(r"\s+", " ", re.sub(r"[*_`]", "", h)).strip().lower() for h in head)
+DOC_LOOKUP = {preset_key(k): v for k, v in DOC_PRESETS.items()}
 
 def fit_doc(te):
     """Return a copy of a table-embed with column widths summing to DOC_TOTAL."""
@@ -33,7 +40,7 @@ def fit_doc(te):
     head = ["".join(o["insert"] for o in te["cells"].get(f"1:{c}", {"content": []})["content"]
                     if isinstance(o["insert"], str)).strip() for c in range(1, n + 1)]
     key = ("User Story Name",) if head and head[0] == "User Story Name" else tuple(head)
-    w = DOC_PRESETS.get(key)
+    w = DOC_LOOKUP.get(preset_key(key))
     if not w or len(w) != n:            # unknown table: scale the current widths proportionally
         cur = [int(c.get("attributes", {}).get("width", 238)) for c in cols]
         w = [max(50, round(x * DOC_TOTAL / sum(cur))) for x in cur]

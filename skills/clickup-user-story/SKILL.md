@@ -27,10 +27,11 @@ ClickUp tools come from the **`reclickup-mcp`** MCP server (local, on the user's
 | --- | --- | --- |
 | `NOT_READY` | Official ClickUp MCP still connecting; nothing was sent | If the text says it waits for the sign-in: tell the user to pick the workspace and click **Connect Workspace** on the ClickUp page in the browser. Call the same tool again (up to 3 times, a few seconds apart). |
 | `STALE_CONNECTION` | The connection had stopped answering; reclickup restarted it | Call again right away. For a write, first check with a read whether it already happened. |
-| `BUSY` | Another Doc write / sign-in is using reclickup's browser | Wait ~10 s, call again. |
+| `BUSY` | Another Doc write / sign-in is using reclickup's browser; nothing was changed | Do not run writes in parallel. Call again once the other one finished. |
 | `NOT_LOGGED_IN` (`clickup_doc_write`) | reclickup's browser has no ClickUp session | Call `clickup_relogin`, then retry once. Tell the user first: macOS may show a Keychain prompt "Microsoft Edge Safe Storage" → **Allow**; on Windows an Edge window opens at the ClickUp login → sign in once. |
 | `LOGIN_PENDING` (`clickup_relogin`, Windows) | The sign-in window is open, not signed in yet | Ask the user to sign in there and say when done, then call `clickup_relogin` again. |
 | `TIMEOUT` (`clickup_doc_write`) | The page did not load in time; nothing was pasted | Check the link, call again once. |
+| `FILE_NOT_FOUND` (`clickup_doc_write`) | The server could not find a `*_path` / `files` entry on the user's computer | Pass the path inside a folder shared with the session (or its host path); otherwise pass `markdown=`. |
 | client says the device "did not respond within 60s" | The call may or may not have run | Reads (`clickup_get_*`, `clickup_list_*`, `clickup_search`): run once more. Writes: ask the user before retrying. |
 
 ## Step 0 — Defaults (don't ask unless missing)
@@ -97,7 +98,8 @@ The Docs API takes markdown only (equal-width tables, no colours; raw HTML shows
 
 1. Draft exactly as in Step 1 and save the `_DRAFT.md`.
 2. **Target page:** the Doc page URL the user gave (`app.clickup.com/<ws>/v/dc/<docId>/<pageId>`; an empty "Untitled" page is fine). Otherwise create one with `clickup_create_document_page` (name `M-XXX-X: Title`, content `placeholder`) and build its URL from the returned ids.
-3. **Write:** `clickup_doc_write(page_url=…, markdown=<the full draft text>, mode="replace")` (`"append"` adds at the end of the page). The first `# Title` line names an untitled page and is not written into the body. It takes ~25 s and returns, per table, widths / green cells / alignment after a reload: report it; every table should read `sum 720`, green > 0, `aligned True`.
+3. **Write from the saved file — never re-type the draft into the call:** `clickup_doc_write(page_url=…, markdown_path=<path of the _DRAFT.md>, mode="replace")`. The server reads the file on the user's computer; Cowork sandbox paths (`/sessions/<name>/mnt/<folder>/…`, including `outputs/`) are mapped automatically. Extra parts go in the SAME call: `delta_path` (a Quill delta or a JSON list of row objects such as Business Rules `[{"Rule ID":…,"Rule Name":…,"Specification":…}]`) and `files=[…]` (more `.md` / `.json`, appended in order). A `Rule ID | Rule Name | Specification` table gets preset widths whether it is in the markdown or the JSON, so one story = one call. Use `markdown=<text>` only when there is no file (`FILE_NOT_FOUND` → pass the host path, or fall back to inline). The first `# Title` line names an untitled page and is not written into the body. `"append"` adds at the end of the page. A write takes ~20 s and returns, per table, widths / green cells / alignment after a reload: report it; every table should read `sum 720`, green > 0, `aligned True` (or `None` when the page has no H1).
+   **Several stories:** write them ONE AT A TIME (they share one browser; a parallel call waits, then returns `BUSY`). Pages can be created ahead with `clickup_create_document_page`.
 4. Never fall back to `clickup_update_document_page` with the tables without asking: that gives half-width, uncolored tables.
 5. **Only if `clickup_doc_write` is missing from the tool list** (reclickup-mcp not installed), read `SKILL_DIR/reference/doc-fallback.md` and follow it (copy page / browser paste).
 

@@ -220,7 +220,7 @@ class job:
     def __enter__(self):
         if not self.lock.acquire(max(0.0, self.timeout)):
             raise Busy("BUSY: another reclickup job is using the browser right now (a Doc write or a sign-in). "
-                       "Nothing was changed; wait a few seconds and call the tool again.")
+                       "Nothing was changed; wait for it to finish and call the tool again. Run Doc writes one at a time, not in parallel.")
         hold(); return self
     def __exit__(self, *exc):
         touch(); self.lock.release()

@@ -12,7 +12,15 @@ PRESETS = {
  ("Code","Type","Message","Shown when"): [70, 120, 370, 280],
  ("Depends On","Reason"): [300, 540],
  ("No.","Question","Related"): [60, 610, 170],
+ ("Rule ID","Rule Name","Specification"): [140, 170, 530],
+ ("Rule ID","Rule Name","Description"): [140, 170, 530],
+ ("BR ID","Rule Name","Specification"): [140, 170, 530],
+ ("No.","Rule ID","Rule Name","Specification"): [60, 120, 150, 510],
 }
+def preset_key(head):
+    """Header cells -> the PRESETS key form: '**Rule ID**', 'rule id ' and 'Rule ID' all match."""
+    return tuple(re.sub(r"\s+", " ", re.sub(r"[*_`]", "", h)).strip().lower() for h in head)
+PRESET_LOOKUP = {preset_key(k): v for k, v in PRESETS.items()}
 NARROW = {"no.","no","#","step","code","id","stt"}
 
 # Markdown backslash escapes. ClickUp's own markdown export writes them (clickup\_doc\_write, \## ...), so a page read
@@ -73,7 +81,7 @@ HEADING = re.compile(r"^(#{1,6})\s+(.*?)\s*#*\s*$")
 BULLET = re.compile(r"^(\s*)[-*+]\s+(?:\[([ xX])\]\s+)?(.*)$")
 ORDERED = re.compile(r"^(\s*)\d+[.)]\s+(.*)$")
 RULE = re.compile(r"^\s*(?:-{3,}|\*{3,}|_{3,})\s*$")
-def md_to_delta(text):
+def md_to_delta(text, skip_title=True):
     src=[protect(l) for l in text.replace("\r\n","\n").split("\n")]
     ops=[]; t=[0]
     def add_table(rows):
@@ -84,7 +92,7 @@ def md_to_delta(text):
         rows=[r if len(r)<=n0 else r[:n0-1]+[" | ".join(r[n0-1:])] for r in rows]
         t[0]+=1; n=max(len(r) for r in rows); head=[restore(c) for c in rows[0]]; kv = head[0]=="User Story Name"
         key=("User Story Name",) if kv else tuple(head)
-        widths=PRESETS.get(key) or fallback(rows[0])
+        widths=PRESET_LOOKUP.get(preset_key(key)) or fallback(rows[0])
         if len(widths)!=n: widths=fallback(rows[0] + [""] * (n - len(rows[0])))
         cells={}
         for r,row in enumerate(rows,1):
@@ -118,7 +126,7 @@ def md_to_delta(text):
             if rows: add_table(rows)
             first=False; continue
         h=HEADING.match(line)
-        if h and first and len(h.group(1))==1: i+=1; first=False; continue   # title line = page/task name
+        if h and first and skip_title and len(h.group(1))==1: i+=1; first=False; continue   # title line = page/task name
         if line.strip(): first=False
         if line.strip() and not (BULLET.match(line) or ORDERED.match(line)): indents.clear()
         if h:

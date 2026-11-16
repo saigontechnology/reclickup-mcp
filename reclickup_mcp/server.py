@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import websocket                      # websocket-client
 from md2delta import md_to_delta
 from delta2doc import convert
+import sources
 
 import browser
 CDP = browser.CDP     # private headless Edge (see browser.py), not the user's debug Edge
@@ -163,7 +164,9 @@ def write_doc(page_url, delta, append=False, title=None, deadline=None):
     if "/v/dc/" not in page_url and "/docs/" not in page_url:
         raise RuntimeError("page_url must be a ClickUp Doc page link (contains /v/dc/ or /docs/).")
     html = convert(delta["ops"] if isinstance(delta, dict) else delta)
-    with browser.job(timeout=min(15, left(deadline) - 30)):
+    # Wait for another write only while enough of the budget is left for this one (~30 s); a write that got the
+    # browser late used to run out of time half way and report TIMEOUT.
+    with browser.job(timeout=left(deadline) - WRITE_NEEDS):
         try:
             browser.ensure()
             return _write_doc(page_url, html, append, title, deadline)
@@ -216,6 +219,7 @@ def _write_doc(page_url, html, append, title, deadline):
         except Exception: pass
 
 
+WRITE_NEEDS = 30                                               # seconds a Doc write needs once it has the browser
 SAVE_WAIT = float(os.environ.get("RECLICKUP_SAVE_WAIT", "4"))   # 2 s already persisted in a test; 4 s leaves margin
 
 
@@ -237,18 +241,26 @@ TOOL = {
     "name": "clickup_doc_write",
     "description": ("Write a user story into a ClickUp DOC page with the team table style (column widths, "
                     "green header cells, bold), directly - no copy/paste for the user. Uses reclickup's own "
-                    "headless Edge (no window); if it reports NOT_LOGGED_IN, call clickup_relogin. Give the Doc page link and EITHER the "
-                    "draft markdown (team ticket format) OR a Quill delta. mode 'replace' (default) "
-                    "overwrites the page body; 'append' adds at the end. Returns per-table widths/colour "
-                    "read back after a reload."),
+                    "headless Edge (no window); if it reports NOT_LOGGED_IN, call clickup_relogin. "
+                    "PREFER FILES: when the draft is saved in a file, pass its path (markdown_path / delta_path / files) "
+                    "instead of re-typing the content - the server reads it from the user's computer (Cowork sandbox "
+                    "paths /sessions/<name>/mnt/<folder>/... are mapped automatically). Several parts (e.g. the story "
+                    "markdown + a Business Rules .json) are joined in ONE write: markdown, markdown_path, delta, "
+                    "delta_path, then files. Tables 'Rule ID | Rule Name | Specification' get preset widths, so a "
+                    "Business Rules table can stay in the markdown. mode 'replace' (default) overwrites the page body; "
+                    "'append' adds at the end. One write takes ~20 s; run writes ONE AT A TIME (they share one browser, "
+                    "a parallel call waits and may return BUSY). Returns per-table widths/colour read back after a reload."),
     "inputSchema": {
         "type": "object",
         "properties": {
             "page_url": {"type": "string", "description": "https://app.clickup.com/<ws>/v/dc/<docId>/<pageId>"},
-            "markdown": {"type": "string", "description": "Draft ticket markdown (the *_DRAFT.md content). A leading '# Title' line is skipped."},
-            "delta": {"type": "object", "description": "Quill delta {ops:[...]} as built for a task (840px tables are refitted to the Doc's 720px)."},
+            "markdown_path": {"type": "string", "description": "Path of a markdown draft file (.md). Its leading '# Title' line names an untitled page and is not written into the body."},
+            "delta_path": {"type": "string", "description": "Path of a JSON file: a Quill delta {ops:[...]}, a list of ops, or a list of row objects (e.g. [{\"Rule ID\":..,\"Rule Name\":..,\"Specification\":..}]) which becomes one table."},
+            "files": {"type": "array", "items": {"type": "string"}, "description": "More files appended in order (.md/.markdown/.txt = markdown, .json = as delta_path)."},
+            "markdown": {"type": "string", "description": "Inline draft markdown, only when there is no file. A leading '# Title' line is skipped."},
+            "delta": {"type": "object", "description": "Inline Quill delta {ops:[...]} as built for a task (840px tables are refitted to the Doc's 720px)."},
             "mode": {"type": "string", "enum": ["replace", "append"], "default": "replace"},
-            "title": {"type": "string", "description": "Page title, used only if the page is untitled. Defaults to the markdown's first '# ' line."},
+            "title": {"type": "string", "description": "Page title, used only if the page is untitled. Defaults to the first markdown's '# ' line."},
         },
         "required": ["page_url"],
     },
@@ -585,12 +597,7 @@ def handle(msg):
             return call_upstream(p, deadline)
         deadline = time.time() + CALL_BUDGET
         try:
-            title = a.get("title")
-            md = a.get("markdown") or ""
-            if not title and md.lstrip().startswith("# "): title = md.lstrip().splitlines()[0][2:].replace("**", "").strip()
-            if a.get("delta"): delta = a["delta"]
-            elif a.get("markdown"): delta = md_to_delta(a["markdown"])
-            else: raise RuntimeError("Pass either 'markdown' or 'delta'.")
+            delta, title = sources.build(a)
             append = a.get("mode") == "append"
             return {"content": [{"type": "text", "text": summary(write_doc(a["page_url"], delta, append, title, deadline), append)}]}
         except Exception as e:
